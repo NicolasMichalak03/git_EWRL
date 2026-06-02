@@ -4,17 +4,29 @@ from scipy.stats import truncnorm
 def truncated_normal_n(mean, std, lower=-1.0, upper=1.0, 
                        max_iter=10000, rng = np.random.RandomState(None)):
     """
-    Tire une loi normale tronquée pour chaque élément de mean/std.
-    - mean, std: vecteurs de même forme (n,)
-    - Retour: un vecteur (n,) avec un échantillon tronqué par élément.
+    Draws samples from a truncated normal distribution for each element of mean/std.
 
-    This is used because a lot faster than scipy.
+    Parameters
+    ----------
+    mean : array-like
+        Vector of means.
+    std : array-like
+        Vector of standard deviations.
+    lower, upper : float
+        Truncation bounds.
+    max_iter : int
+        Maximum number of rejection-sampling iterations.
+
+    Returns
+    -------
+    np.ndarray
+        A vector of truncated normal samples.
     """
     mean = np.atleast_1d(mean).astype(float)
     std  = np.atleast_1d(std).astype(float)
     std[std < 1e-12] = 1e-12
 
-    assert mean.shape == std.shape, "mean et std doivent avoir la même forme"
+    assert mean.shape == std.shape, "mean and std must have same shape"
 
     n = mean.shape[0]
     res = np.empty(n, dtype=float)
@@ -22,20 +34,20 @@ def truncated_normal_n(mean, std, lower=-1.0, upper=1.0,
 
     count = 0
     while not np.all(done) and count < max_iter:
-        # Tirage pour ceux qui ne sont pas encore remplis
+        # Draw for those who are not yet filled
         m = mean[~done]
         s = std[~done]
-         # Sécurité minimale
+        # Minimum security
         samples = rng.normal(m, s)
         keep = (samples >= lower) & (samples <= upper)
 
-        # Écrire dans les positions non remplies
+        # Write in unfilled positions
         idx = np.flatnonzero(~done)
         res[idx[keep]] = samples[keep]
         done[idx[keep]] = True
         count += 1
 
-  # ---- FALLBACK IDENTIQUE À sample_alpha ----
+  # ---- FALLBACK SAME AS sample_alpha ----
     if not np.all(done):
         idx_fail = np.flatnonzero(~done)
         res[idx_fail] = np.random.uniform(lower, upper, size=len(idx_fail))
@@ -43,14 +55,29 @@ def truncated_normal_n(mean, std, lower=-1.0, upper=1.0,
     return res
 
 
-def truncated_normal(mean, std, lower=-1.0, upper=1.0, max_iter=10000, rng = None):
+def truncated_normal(mean, std, lower=-1.0, upper=1.0, max_iter=10000):
     """
-    Tire une loi normale tronquée pour chaque élément de mean/std.
-    - mean, std: vecteurs de même forme (n,)
-    - Retour: un vecteur (n,) avec un échantillon tronqué par élément.
+    Draws samples from a truncated normal distribution for each element of mean/std.
+
+    Parameters
+    ----------
+    mean : array-like
+        Vector of means.
+    std : array-like
+        Vector of standard deviations.
+    lower, upper : float
+        Truncation bounds.
+    max_iter : int
+        Maximum number of rejection-sampling iterations.
+
+    Returns
+    -------
+    np.ndarray
+        A vector of truncated normal samples.
     """
     mean = np.atleast_1d(mean).astype(float)
     std  = np.atleast_1d(std).astype(float)
+    
     assert mean.shape == std.shape, "mean et std doivent avoir la même forme"
 
     n = mean.shape[0]
@@ -59,21 +86,21 @@ def truncated_normal(mean, std, lower=-1.0, upper=1.0, max_iter=10000, rng = Non
 
     count = 0
     while not np.all(done) and count < max_iter:
-        # Tirage pour ceux qui ne sont pas encore remplis
+        # Draw for those who are not yet filled
         m = mean[~done]
         s = std[~done]
-         # Sécurité minimale
+        # Minimum security
         s = np.maximum(s, 1e-12)
         samples = np.random.normal(m, s)
         keep = (samples >= lower) & (samples <= upper)
 
-        # Écrire dans les positions non remplies
+        # Write in unfilled positions
         idx = np.flatnonzero(~done)
         res[idx[keep]] = samples[keep]
         done[idx[keep]] = True
         count += 1
 
-  # ---- FALLBACK IDENTIQUE À sample_alpha ----
+# ---- FALLBACK SAME AS sample_alpha ----
     if not np.all(done):
         idx_fail = np.flatnonzero(~done)
         res[idx_fail] = np.random.uniform(lower, upper, size=len(idx_fail))
@@ -82,8 +109,15 @@ def truncated_normal(mean, std, lower=-1.0, upper=1.0, max_iter=10000, rng = Non
 
 
 
+
 def make_json_serializable(obj):
-    """Convertit récursivement les objets numpy en types Python natifs."""
+    
+    """
+    Recursively converts numpy objects into native Python types
+    so they can be serialized to JSON.
+
+    Useful when saving simulation results.
+    """
     if isinstance(obj, dict):
         return {k: make_json_serializable(v) for k, v in obj.items()}
     elif isinstance(obj, list):

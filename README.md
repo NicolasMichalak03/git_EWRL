@@ -15,6 +15,7 @@ Description of script content:
 - `gym-postop`: gymnasium code for post-op environment, compatible with `stable-baselines3`.
 - `mdp_jax.py`: compute discretized optimal policy through Bellman equation.
 - `politiques.py`: contain definition of our estimation schemes (Gibbs sampler, Least square estimation...).
+- `individu.py` :  Defines the Individu class, representing a single simulated patient.
 - `env.py`: environment and parallel environments.
 - `simulation.py`: runner to launch experiments.
 
